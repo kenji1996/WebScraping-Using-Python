@@ -5,8 +5,8 @@ import logging
 from selenium.webdriver.remote.remote_connection import LOGGER
 from file import create_file
 
-EMAIL = r"kenji_tanizaki@hotmail.com"
-PW = r"yemB6Z2%q!LF"
+EMAIL = r"EMAIL"
+PW = r"PASSWORD"
 
 def is_empty(valor):
     if valor == "" or valor == None:

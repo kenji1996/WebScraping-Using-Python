@@ -1,6 +1,7 @@
 from os import listdir
 from os.path import isfile, join
 import re
+from PIL import Image, ImageFont, ImageDraw 
 
 # Nine Star Hegemon Body Art - Separated by volumes (WuxiaWorld)
 NSHBDA = [(1,119),(119, 235),(235, 312),
@@ -28,9 +29,15 @@ def is_chapter_missing(dir, volume):
     return False
 
 def create_href(file):
+
     #if file is xhtml, otherwise change it
     sub_string = re.sub('.xhtml', '', file)
-    return f'<p class="calibre_5"><a href="{file}">{sub_string}</a></p>\n'
+    titulo = ""
+
+    for i in range(2, len(sub_string)):
+        titulo += sub_string[i]
+
+    return f'<p class="calibre_5"><a href="{file}">{titulo}</a></p>\n'
 
 def create_toc(title,href):
 
