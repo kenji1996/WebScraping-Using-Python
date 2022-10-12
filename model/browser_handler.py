@@ -48,7 +48,7 @@ class BrowserHandler:
 
         # Hides console log
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        browser = webdriver.Chrome(options=options, executable_path = self.path)
+        browser = webdriver.Chrome(options=options)
         return browser
 
     def get(self, text : str):
@@ -93,10 +93,12 @@ class BrowserHandler:
             # No element contains the text.    
             except NoSuchElementException:
                 print("Element not found. Maybe try another piece of text.")
+                return 0
 
             # There's a special characters that is not processed correctly.
             except SyntaxError:
                 print("The text contains special characters that are not allowed.")
+                return 0
 
         return result
 
@@ -107,7 +109,7 @@ class BrowserHandler:
         while result is None:
 
             try:
-                button = self.browser.find_element(By.XPATH, f'//a[@href="{url}"]')
+                button = self.browser.find_element(By.XPATH, f'//*[@href="{url}"]')
                 element = Elements()
                 element.property = {"id": button.get_attribute('id'),
                                     "class": button.get_attribute('class'),
@@ -116,6 +118,7 @@ class BrowserHandler:
                 return result
             except NoSuchElementException:
                 print("Couldn't find any button with this link.")
+                return 0
 
     def scrape_page(self):
 
@@ -129,7 +132,3 @@ class BrowserHandler:
         texts = [el.text for el in texts]
 
         return texts
-
-if __name__ == "__main__":
-
-    handler = BrowserHandler()
