@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import InvalidArgumentException, NoSuchElementException, TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 from resources.const import TABLE_REPLACE, PATTERN
+from resources.functions import get_common_xpath
 import time
 import re
 
@@ -19,6 +20,8 @@ class Element:
             "tag" : '',
             "xpath" : ''
         }
+
+        self.items = {}        
 
 
 class BrowserHandler:
@@ -60,9 +63,13 @@ class BrowserHandler:
 
     def get(self, text: str):
 
+        """ Access specific website.
+        
+            Should bypass some safety protocols """
+
         # webdriver.Chrome only accepts https://something.com, not www.something.com or something.com
-        if text[:8] != r'https://':
-            text = r'https://' + text
+        if text[:4] == "www.":
+            text = "https://" + text[4:]
 
         try:
             self.browser.get(text)
@@ -111,6 +118,8 @@ class BrowserHandler:
                 elemento.property['tag'] = elemento_list.tag
                 elemento.property['xpath'] = xpath
 
+                elemento.items = dict( (k, v) for k,v in elemento_list.items()  )
+
                 return elemento
 
         # No element contains the text.
@@ -146,9 +155,39 @@ class BrowserHandler:
                 print("Couldn't find any button with this link.")
                 return 0
     
-    def scrape_page(self, elemento1 : Element, elemento2 : Element):
+    def scrape_page(self, el1 : Element, el2 : Element) -> list:
+
+        """ Given 2 different Element objects, search the common xpath
+        
+            between them and scrape all elements with the same tag"""
 
         pagina = self.browser.page_source
+        pagina = PATTERN.sub(lambda m: TABLE_REPLACE[re.escape(m.group(0))], pagina)
         root = html.fromstring(pagina)
         tree = root.getroottree()
+
+        el1_tag = el1.property['tag']
+        el2_tag = el2.property['tag']
+
+        # Finding similar xpath
+        cmm_xpath = get_common_xpath(elemento1=el1.property['xpath'], elemento2=el2.property['xpath'])
+        cmm_div = root.xpath(cmm_xpath)
+
+        # In case the content have different tags
+        if el1_tag == el2_tag:
+            content_list = cmm_div.xpath(f'.//{el1_tag}')
+        else:
+            content_list = cmm_div.xpath(f'.//{el1_tag} | .//{el2_tag}')
+
+        return content_list
+
+        
+
+        
+
+        
+
+        
+
+
 

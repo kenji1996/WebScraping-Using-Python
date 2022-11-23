@@ -12,5 +12,4 @@ TABLE_REPLACE = {
 # Redo the dict to fix characters
 TABLE_REPLACE = dict((re.escape(k), v) for k, v in TABLE_REPLACE.items())
 
-
 PATTERN = re.compile("|".join(TABLE_REPLACE.keys()))

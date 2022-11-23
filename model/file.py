@@ -1,6 +1,24 @@
-class Epub:
+class File:
 
-    def __init__(self, title, href) -> None:
+    def __init__(self, file_name, dir, ext = "txt", content=[]):
+
+        self.file_name = file_name
+        self.dir = dir
+        self.ext = ext
+        self.content = content
+
+    def create_file(self) -> None:
+
+        with open(fr"{self.dir}/{self.file_name}.{self.ext}", "w+", encoding='utf-8') as f:
+            if not len(self.content):
+                pass
+            else:
+                for phrase in self.content:
+                    f.write(phrase)
+
+class Epub(File):
+
+    def __init__(self, title, href, content) -> None:
 
         """ Epub objects contains title, href and table of content [toc].
         
@@ -9,6 +27,8 @@ class Epub:
         self.title = title
         self.href = href
         self.table_of_content = self.create_toc(self.title, self.href)
+        self.content = content
+        self.ext = "epub"
 
     def create_toc(title,href) -> str:
 

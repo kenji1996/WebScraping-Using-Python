@@ -3,8 +3,25 @@ from os import rename
 from os.path import isfile, join
 from itertools import tee
 from random import choices
-import re
 import string
+
+def get_common_xpath(elemento1 : str, elemento2 : str) -> str:
+    
+    """ Finds out the common xpath between 2 given xpaths."""
+
+    # Transforming xpath string into list of components and zipping both lists into one
+    el1_xpath = elemento1.split(sep=r'/')
+    el2_xpath = elemento2.split(sep=r'/')
+
+    el_zipped = list(zip(el1_xpath, el2_xpath))
+
+    # Looping through zipped list to check what components are identical    
+    el_equal_comp = [i for i,j in el_zipped if i == j]
+
+    # Joining all equal components, separating then with /
+    el_equal_comp = '/'.join(el_equal_comp)
+
+    return el_equal_comp
 
 def check_instance_iterable(var) -> bool:
 
