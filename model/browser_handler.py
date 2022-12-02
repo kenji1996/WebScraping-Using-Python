@@ -21,8 +21,7 @@ class Element:
             "xpath" : ''
         }
 
-        self.items = {}        
-
+        self.items = {}
 
 class BrowserHandler:
 
@@ -181,13 +180,33 @@ class BrowserHandler:
 
         return content_list
 
-        
+    def get_in_between(self, el1 : Element, el2 : Element) -> list:
 
-        
+        """ Given 2 elements in the same div, returns all elements between them. 
+            
+            Returns a list of all elements found. """
 
-        
+        pagina = self.browser.page_source
+        pagina = PATTERN.sub(lambda m: TABLE_REPLACE[re.escape(m.group(0))], pagina)
+        root = html.fromstring(pagina)
 
-        
+        ele1 = root.xpath(el1.property['xpath'])[0]
 
+        el1_div = ele1.getparent()
 
+        tag1 = el1.property['tag']
 
+        el1_div_el = el1_div.xpath(f'./{tag1}')
+
+        add = False
+        content = []
+
+        for el in el1_div_el:
+            if el == el2:
+                add = False
+            if add:
+                content.append(el)
+            if el == el1:
+                add = True
+
+        return content

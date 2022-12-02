@@ -7,7 +7,7 @@ class File:
         self.ext = ext
         self.content = content
 
-    def create_file(self) -> None:
+    def open_file(self) -> None:
 
         with open(fr"{self.dir}/{self.file_name}.{self.ext}", "w+", encoding='utf-8') as f:
             if not len(self.content):
@@ -72,3 +72,6 @@ class Epub(File):
         </html>
         """
         return page
+
+    def save_file(self):
+        pass

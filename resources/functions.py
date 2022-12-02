@@ -4,6 +4,8 @@ from os.path import isfile, join
 from itertools import tee
 from random import choices
 import string
+from lxml.html import HtmlElement
+from model.browser_handler import Element
 
 def get_common_xpath(elemento1 : str, elemento2 : str) -> str:
     
@@ -22,6 +24,9 @@ def get_common_xpath(elemento1 : str, elemento2 : str) -> str:
     el_equal_comp = '/'.join(el_equal_comp)
 
     return el_equal_comp
+
+def is_same_div(elemento1 : HtmlElement, elemento2 : HtmlElement):
+    return elemento1.getparent() == elemento2.getparent()
 
 def check_instance_iterable(var) -> bool:
 
@@ -151,8 +156,3 @@ def reformat_all_files_numbers(dir: str, limit = 1000):
     # Apply the changed numbers to the file itself.
     for old_name, new_name in zip(files, onlyfiles):
         rename(rf'{dir}/{old_name}', rf'{dir}/{new_name}')
-        
-
-if __name__ == '__main__':
-
-    pass
