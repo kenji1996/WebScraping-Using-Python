@@ -1,11 +1,21 @@
-# WebScrapping-using-Python
-> Using Selenium, it extracts blocks of text from multiple pages automatically using a few samples.
+# WebScrapping-Using-Python
 
-### Adjustments and improving
-> Project still in development..
+`
+In this library, you will find functions that will help you extract the desired content from websites using Selenium. You will be able to scrape content from the page by giving a few text samples as base.
+`
 
-### Requirements
+## Requirements
 
-> lxml  
-> selenium  
-> webdriver-manager
+- `lxml`
+- `selenium`
+- `webdriver-manager`
+
+## How to use:
+
+- Install the requirements
+
+    ```pip -r requirements.txt```
+
+- Install the library
+
+    ```pip install webscrapping-using-python```

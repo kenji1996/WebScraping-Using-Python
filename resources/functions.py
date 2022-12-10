@@ -5,7 +5,6 @@ from itertools import tee
 from random import choices
 import string
 from lxml.html import HtmlElement
-from model.browser_handler import Element
 
 def get_common_xpath(elemento1 : str, elemento2 : str) -> str:
     

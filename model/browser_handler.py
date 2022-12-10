@@ -5,10 +5,10 @@ from selenium.webdriver.remote.remote_connection import LOGGER
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import InvalidArgumentException, NoSuchElementException, TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
-from resources.const import TABLE_REPLACE, PATTERN
-from resources.functions import get_common_xpath
 import time
 import re
+
+from src.resources import const, functions
 
 class Element:
 
@@ -18,7 +18,8 @@ class Element:
             "id": '',
             "class": '',
             "tag" : '',
-            "xpath" : ''
+            "xpath" : '',
+            "text": ''
         }
 
         self.items = {}
@@ -32,9 +33,20 @@ class BrowserHandler:
         self.browser = browser
         self.path = path
         self.browser = self.create_browser()
+        self.html = self.get_current_html()
         self.first_time = True
 
-    def create_browser(self):
+    def get_current_html(self) -> html.HtmlElement:
+        # HTML object
+        pagina = self.browser.page_source
+        pagina = const.PATTERN.sub(lambda m: const.TABLE_REPLACE[re.escape(m.group(0))], pagina)
+
+        # Convert HTML object into string
+        root = html.fromstring(pagina)
+
+        return root
+
+    def create_browser(self) -> webdriver.Chrome:
         """ Create Chrome browser.
             Will return 0 if Browser is already instanced at object.browser.
 
@@ -60,7 +72,7 @@ class BrowserHandler:
         browser = webdriver.Chrome(ChromeDriverManager().install())
         return browser
 
-    def get(self, text: str):
+    def get(self, text: str) -> None:
 
         """ Access specific website.
         
@@ -75,26 +87,21 @@ class BrowserHandler:
             if self.first_time:
                 time.sleep(10)
                 self.first_time = False
+                self.html = self.get_current_html()
         except InvalidArgumentException:
             print("Could not enter " + text)
 
-    def search_element(self, text1: str) -> Element():
+    def search_element(self, text1: str) -> Element:
 
         """ Search element that contains certain text. 
             
             :param text1: Text to search """
 
         try:
-            # HTML object
-            pagina = self.browser.page_source
-            pagina = PATTERN.sub(lambda m: TABLE_REPLACE[re.escape(m.group(0))], pagina)
-
-            # Convert HTML object into string
-            root = html.fromstring(pagina)
-            tree = root.getroottree()
+            tree = self.html.getroottree()
 
             # List of elements
-            elemento_list = root.xpath(f""" //*[contains(text(), '{text1}')] """)
+            elemento_list = self.html.xpath(f""" //*[contains(text(), '{text1}')] """)
             elem_size = len(elemento_list)
 
             # If list is empty
@@ -135,7 +142,7 @@ class BrowserHandler:
             print("Page took too long to load or element can't be located.")
             return 0
 
-    def find_button(self, url: str):
+    def find_button_by_url(self, url: str) -> Element:
 
         result = None
 
@@ -160,17 +167,14 @@ class BrowserHandler:
         
             between them and scrape all elements with the same tag"""
 
-        pagina = self.browser.page_source
-        pagina = PATTERN.sub(lambda m: TABLE_REPLACE[re.escape(m.group(0))], pagina)
-        root = html.fromstring(pagina)
-        tree = root.getroottree()
+        tree = self.html.getroottree()
 
         el1_tag = el1.property['tag']
         el2_tag = el2.property['tag']
 
         # Finding similar xpath
-        cmm_xpath = get_common_xpath(elemento1=el1.property['xpath'], elemento2=el2.property['xpath'])
-        cmm_div = root.xpath(cmm_xpath)
+        cmm_xpath = functions.get_common_xpath(elemento1=el1.property['xpath'], elemento2=el2.property['xpath'])
+        cmm_div = tree.xpath(cmm_xpath)[0]
 
         # In case the content have different tags
         if el1_tag == el2_tag:
@@ -186,11 +190,13 @@ class BrowserHandler:
             
             Returns a list of all elements found. """
 
-        pagina = self.browser.page_source
-        pagina = PATTERN.sub(lambda m: TABLE_REPLACE[re.escape(m.group(0))], pagina)
-        root = html.fromstring(pagina)
+        tree = self.html.getroottree()
 
-        ele1 = root.xpath(el1.property['xpath'])[0]
+        ele1 = tree.xpath(el1.property['xpath'])
+        ele1 = ele1[0]
+
+        ele2 = tree.xpath(el2.property['xpath'])
+        ele2 = ele2[0]
 
         el1_div = ele1.getparent()
 
@@ -198,15 +204,23 @@ class BrowserHandler:
 
         el1_div_el = el1_div.xpath(f'./{tag1}')
 
-        add = False
-        content = []
+        start, end = 0,0
 
-        for el in el1_div_el:
-            if el == el2:
-                add = False
-            if add:
-                content.append(el)
-            if el == el1:
-                add = True
+        for index, el in enumerate(el1_div_el):
+            if el.text_content() == ele1.text_content():
+                start = index
+            elif el.text_content() == ele2.text_content():
+                end = index
+
+        content = [el1_div_el[i].text_content() for i in range(start+1, end)]
 
         return content
+
+if __name__ == "__main__":
+    
+    handler = BrowserHandler()
+    handler.get('https://novelbin.net/n/the-desolate-era-novel/chapter-30')
+    el1 = handler.search_element('The Aquatic Rhino King, seated on his stone chair, glanced at the bald armored guard.')
+    el2 = handler.search_element('Uncle Dala gritted his teeth, then led his tribesmen to flee. As for those of other tribes, they had fled long ago. They had been utterly frightened.')
+    """ a = handler.get_in_between(el1, el2)
+    print(a) """
