@@ -26,12 +26,11 @@ class Element:
 
 class BrowserHandler:
 
-    def __init__(self, browser=None, path="") -> None:
+    def __init__(self, browser=None) -> None:
         """ :param browser: Chrome browser
             :param element: Element object holding info (Default is None) """
 
         self.browser = browser
-        self.path = path
         self.browser = self.create_browser()
         self.html = self.get_current_html()
         self.first_time = True
@@ -65,6 +64,7 @@ class BrowserHandler:
 
         # Makes browser invisible
         options.add_argument("--headless")
+        options.add_argument("--disable-blink-features=AutomationControlled")
 
         # Hides console log
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
@@ -113,6 +113,17 @@ class BrowserHandler:
             elif elem_size > 1:
                 print("Found more than 1 element with said text. ONLY the first one will be considered")
                 elemento_list = elemento_list[0]
+                xpath = tree.getpath(elemento_list)
+
+                elemento = Element()
+                elemento.property['class'] = elemento_list.get('class')
+                elemento.property['id'] = elemento_list.get('id')
+                elemento.property['tag'] = elemento_list.tag
+                elemento.property['xpath'] = xpath
+
+                elemento.items = dict( (k, v) for k,v in elemento_list.items()  )
+
+                return elemento
 
             else:
                 elemento_list = elemento_list[0]
@@ -218,9 +229,4 @@ class BrowserHandler:
 
 if __name__ == "__main__":
     
-    handler = BrowserHandler()
-    handler.get('https://novelbin.net/n/the-desolate-era-novel/chapter-30')
-    el1 = handler.search_element('The Aquatic Rhino King, seated on his stone chair, glanced at the bald armored guard.')
-    el2 = handler.search_element('Uncle Dala gritted his teeth, then led his tribesmen to flee. As for those of other tribes, they had fled long ago. They had been utterly frightened.')
-    """ a = handler.get_in_between(el1, el2)
-    print(a) """
+    pass

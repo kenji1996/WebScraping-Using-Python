@@ -12,10 +12,34 @@ In this library, you will find functions that will help you extract the desired 
 
 ## How to use:
 
-- Install the requirements
+First create an instance of `BrowserHandler`
 
-    ```pip -r requirements.txt```
+>   
 
-- Install the library
+    # No need to specify chromedriver.exe path
+    >>> handler = BrowserHandler()
 
-    ```pip install webscrapping-using-python```
+Enter into the desired page
+
+>
+
+    >>> handler.get("www.youtube.com")
+
+Search desired element
+
+>
+
+
+    >>> element = handler.search_element("Home")
+    >>> element
+    <src.model.browser_handler.Element object at 0x000001686AF13EB0>
+
+    # [ There are 2 attributes of Element, property and items ]
+    # Element.property search for specific attributes from the element and holds it.
+    # Element.items holds all attributes there is
+
+    >>> element.property
+    {'id': None, 'class': None, 'tag': 'script', 'xpath': '/html/head/script[13]', 'text': ''}
+
+    >>> element.items
+    {'nonce': 'izOFwYwHVzP4Jiq7oiQHHg'}
