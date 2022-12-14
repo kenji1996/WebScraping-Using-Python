@@ -3,41 +3,49 @@ from os import rename
 from os.path import isfile, join
 from itertools import tee
 from random import choices
-import string
-from lxml.html import HtmlElement
+from itertools import takewhile
 
-def get_common_xpath(elemento1 : str, elemento2 : str) -> str:
+from src.model.elem import Element
+
+def get_common_xpath(*args : list[Element], sep=r"/"):
+
+    # Check if all args are type Element 
+
+    condition = all([isinstance(x, Element) for x in args])
+
+    if not condition:
+        return print("Invalid argument. Make sure every object is of Element type.")
     
-    """ Finds out the common xpath between 2 given xpaths."""
+    list_xpath = []
+    list_size = len(args)
 
-    # Transforming xpath string into list of components and zipping both lists into one
-    el1_xpath = elemento1.split(sep=r'/')
-    el2_xpath = elemento2.split(sep=r'/')
+    if list_size < 2:
 
-    el_zipped = list(zip(el1_xpath, el2_xpath))
-
-    # Looping through zipped list to check what components are identical    
-    el_equal_comp = [i for i,j in el_zipped if i == j]
-
-    # Joining all equal components, separating then with /
-    el_equal_comp = '/'.join(el_equal_comp)
-
-    return el_equal_comp
-
-def is_same_div(elemento1 : HtmlElement, elemento2 : HtmlElement):
-    return elemento1.getparent() == elemento2.getparent()
-
-def check_instance_iterable(var) -> bool:
-
-    """ Check if variable is an iterable. 
+        return print("Function only works with 2 or more elements.")
         
-        Return True if var is a list/tuple/set, otherwise False. """
+    else:
 
-    conditions = (isinstance(var, list), 
-                isinstance(var, tuple),
-                isinstance(var, set))
+        # Transforms all xpaths into list of strings
+        # '/html/body/div/header/div/nav/ul' -> ['', 'html', 'body', 'div', 'header', 'div', 'nav', 'ul']
+        list_xpath = [el.property['xpath'].split(sep=sep) for el in args]
 
-    return any(conditions)
+    # *list unpacks list
+    list_xpath_zip = list(zip(*list_xpath))    
+    
+    # takewhile() applies a condition to a iterable and only stops when it returns False to said conditions
+    # n = tuple of string
+    # n[0] = string itself
+    # the condition is lambda x: returns true if all elements are equal to first element of x
+
+    common_xpath = list(
+                        n[0] for n in takewhile
+                                                (
+                                                lambda x: all(m == x[0] for m in x)
+                                                , list_xpath_zip
+                                                )
+                        )
+
+    return '/'.join(common_xpath)
 
 def reformat_all_files_numbers(dir: str, limit = 1000):
 

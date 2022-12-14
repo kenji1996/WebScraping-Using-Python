@@ -12,20 +12,23 @@ In this library, you will find functions that will help you extract the desired 
 
 ## How to use:
 
-First create an instance of `BrowserHandler`
+First create an instance of `BrowserHandler`:
 
 >   
 
     # No need to specify chromedriver.exe path
     >>> handler = BrowserHandler()
 
-Enter into the desired page
+Enter into the desired page:
 
 >
 
     >>> handler.get("www.youtube.com")
 
-Search desired element
+<br>
+<hr/>
+<br>
+Search desired element:
 
 >
 
@@ -43,3 +46,26 @@ Search desired element
 
     >>> element.items
     {'nonce': 'izOFwYwHVzP4Jiq7oiQHHg'}
+
+`search_element()` can also grab more than 1 element if `PARAMETER all` is `True` (`False` by default)
+
+>
+
+    >>> handler.get('www.python.org')
+
+    >>> handler.search_element('Events', all=True)
+
+    [<__main__.Element object at 0x00000261C5070F70>, <__main__.Element object at 0x00000261C5070F10>, <__main__.Element object at 0x00000261C5070280>, <__main__.Element object at 0x00000261C50702B0>, <__main__.Element object at 0x00000261C5070880>, <__main__.Element object at 0x00000261C50708E0>, <__main__.Element object at 0x00000261C5070850>, <__main__.Element object at 0x00000261C5070A90>, <__main__.Element object at 0x00000261C5077040>, <__main__.Element object at 0x00000261C50770A0>, <__main__.Element object at 0x00000261C5077100>]
+    
+
+
+
+<br>
+<hr/>
+<br>
+
+Catch all elements between 2 given elements :
+
+>
+
+    `Nossa`

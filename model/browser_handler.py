@@ -5,35 +5,26 @@ from selenium.webdriver.remote.remote_connection import LOGGER
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import InvalidArgumentException, NoSuchElementException, TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
-import time
 import re
 
 from src.resources import const, functions
-
-class Element:
-
-    def __init__(self) -> None:
-
-        self.property = {
-            "id": '',
-            "class": '',
-            "tag" : '',
-            "xpath" : '',
-            "text": ''
-        }
-
-        self.items = {}
+from src.model.elem import Element
 
 class BrowserHandler:
 
     def __init__(self, browser=None) -> None:
-        """ :param browser: Chrome browser
-            :param element: Element object holding info (Default is None) """
 
         self.browser = browser
         self.browser = self.create_browser()
         self.html = self.get_current_html()
         self.first_time = True
+
+    def __str__(self) -> str:
+
+        string = f""" \nbrowser: {self.browser}\n
+                      current url: {self.browser.current_url}\n"""
+
+        return string
 
     def get_current_html(self) -> html.HtmlElement:
         # HTML object
@@ -85,17 +76,17 @@ class BrowserHandler:
         try:
             self.browser.get(text)
             if self.first_time:
-                time.sleep(10)
                 self.first_time = False
                 self.html = self.get_current_html()
         except InvalidArgumentException:
             print("Could not enter " + text)
 
-    def search_element(self, text1: str) -> Element:
+    def search_element(self, text1: str, all=False) -> Element:
 
         """ Search element that contains certain text. 
             
-            :param text1: Text to search """
+            :param text1: Text to search 
+            :param all: If there's multiple matches, return all. False by Default"""
 
         try:
             tree = self.html.getroottree()
@@ -104,6 +95,19 @@ class BrowserHandler:
             elemento_list = self.html.xpath(f""" //*[contains(text(), '{text1}')] """)
             elem_size = len(elemento_list)
 
+            # Function to build Element object from html.HtmlElement
+            def build_elem(elem : html.HtmlElement):
+                xpath = tree.getpath(elem)
+
+                elemento = Element()
+                elemento.property['class'] = elem.get('class')
+                elemento.property['id'] = elem.get('id')
+                elemento.property['tag'] = elem.tag
+                elemento.property['xpath'] = xpath
+
+                elemento.items = dict( (k, v) for k,v in elem.items()  )
+                return elemento
+
             # If list is empty
             if not elem_size:
                 print("Couldn't find any element.")
@@ -111,31 +115,27 @@ class BrowserHandler:
 
             # List bigger than 1
             elif elem_size > 1:
-                print("Found more than 1 element with said text. ONLY the first one will be considered")
-                elemento_list = elemento_list[0]
-                xpath = tree.getpath(elemento_list)
+                """ print("Found more than 1 element with said text") """
+                if not all:
 
-                elemento = Element()
-                elemento.property['class'] = elemento_list.get('class')
-                elemento.property['id'] = elemento_list.get('id')
-                elemento.property['tag'] = elemento_list.tag
-                elemento.property['xpath'] = xpath
+                    elemento_list = elemento_list[0]
+                    elemento = build_elem(elemento_list)
 
-                elemento.items = dict( (k, v) for k,v in elemento_list.items()  )
+                    return elemento
+                
+                elif all:
 
-                return elemento
+                    elementos = []
+                    for elem in elemento_list:
+
+                        elemento = build_elem(elem)
+                        elementos.append(elemento)
+
+                    return elementos
 
             else:
                 elemento_list = elemento_list[0]
-                xpath = tree.getpath(elemento_list)
-
-                elemento = Element()
-                elemento.property['class'] = elemento_list.get('class')
-                elemento.property['id'] = elemento_list.get('id')
-                elemento.property['tag'] = elemento_list.tag
-                elemento.property['xpath'] = xpath
-
-                elemento.items = dict( (k, v) for k,v in elemento_list.items()  )
+                elemento = build_elem(elemento_list)
 
                 return elemento
 
@@ -184,7 +184,7 @@ class BrowserHandler:
         el2_tag = el2.property['tag']
 
         # Finding similar xpath
-        cmm_xpath = functions.get_common_xpath(elemento1=el1.property['xpath'], elemento2=el2.property['xpath'])
+        cmm_xpath = functions.get_common_text(elemento1=el1.property['xpath'], elemento2=el2.property['xpath'])
         cmm_div = tree.xpath(cmm_xpath)[0]
 
         # In case the content have different tags
@@ -209,7 +209,7 @@ class BrowserHandler:
         ele2 = tree.xpath(el2.property['xpath'])
         ele2 = ele2[0]
 
-        el1_div = ele1.getparent()
+        el1_div, _ = functions.get_common_text(ele1, ele2)
 
         tag1 = el1.property['tag']
 
@@ -229,4 +229,13 @@ class BrowserHandler:
 
 if __name__ == "__main__":
     
-    pass
+    handler = BrowserHandler()
+    handler.get('www.python.org')
+
+    about = handler.search_element('About')
+    events = handler.search_element('Events')
+
+    a = about.property['xpath']
+    e = events.property['xpath']
+
+    xpath = functions.get_common_text(a,e)
