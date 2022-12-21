@@ -1,4 +1,4 @@
-# WebScrapping-Using-Python
+# WebScraping-Using-Python
 
 `
 In this library, you will find functions that will help you extract the desired content from websites using Selenium. You will be able to scrape content from the page by giving a few text samples as base.
