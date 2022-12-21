@@ -76,14 +76,14 @@ Catch all elements between 2 given elements with `BrowserHandler.get_in_between(
     current url: https://www.python.org/
 
 
-![Screenshot](/src/resources/images/pythonorgsite.png)
+![Screenshot](/resources/images/pythonorgsite.png)
 
 >
 
     If I want all elements that's between 'About' and 'Events'...
 
 
-![Screenshot](/src/resources/images/pythonorgel.png)
+![Screenshot](/resources/images/pythonorgel.png)
 
 >
 
