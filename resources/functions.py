@@ -2,12 +2,15 @@ from os import listdir
 from os import rename
 from os.path import isfile, join
 from itertools import tee
-from random import choices
+from random import choices, choice
 from itertools import takewhile
+import string
 
 from src.model.elem import Element
 
 def get_common_xpath(*args : list[Element], sep=r"/"):
+
+    """ Given >=2 Element objects, finds the common xpath between them. """
 
     # Check if all args are type Element 
 
@@ -29,6 +32,8 @@ def get_common_xpath(*args : list[Element], sep=r"/"):
         # '/html/body/div/header/div/nav/ul' -> ['', 'html', 'body', 'div', 'header', 'div', 'nav', 'ul']
         list_xpath = [el.property['xpath'].split(sep=sep) for el in args]
 
+    elements_size = [len(x) for x in list_xpath]
+
     # *list unpacks list
     list_xpath_zip = list(zip(*list_xpath))    
     
@@ -45,9 +50,12 @@ def get_common_xpath(*args : list[Element], sep=r"/"):
                                                 )
                         )
 
-    return '/'.join(common_xpath)
+    elements_size = list(x - len(common_xpath) for x in elements_size)
+    common_xpath = '/'.join(common_xpath)
 
-def reformat_all_files_numbers(dir: str, limit = 1000):
+    return common_xpath, elements_size
+
+def rename_files_numbers(dir: str, limit = 1000):
 
     """ Given a certain directory, scan all files and, if there's a number,
     
@@ -163,3 +171,34 @@ def reformat_all_files_numbers(dir: str, limit = 1000):
     # Apply the changed numbers to the file itself.
     for old_name, new_name in zip(files, onlyfiles):
         rename(rf'{dir}/{old_name}', rf'{dir}/{new_name}')
+
+def random_name(n=10, upper = True, lower = True, numbers = True):
+
+    """ Generates string of random characters.
+        
+        :param n: Number of characters (default 10).
+
+        :param upper: Uppercase letters (default True). 
+        
+        :param lower: Lowercase letters (default True). """
+
+    dicionario = {
+                    ('upper', upper) : string.ascii_uppercase,
+                    ('lower', lower) : string.ascii_lowercase,
+                    ('numbers', numbers) : string.digits
+                }
+
+    characters = ""
+
+    for key, value in dicionario.items():
+        if key[1]:
+            characters += value
+
+    seq = ''.join([choice(characters) for x in range(0,n)])
+    
+    return seq
+
+if __name__=="__main__":
+
+    seq = random_name(20)
+    print(seq,len(seq))

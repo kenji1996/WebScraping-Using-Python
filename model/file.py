@@ -1,6 +1,9 @@
-class File:
+from src.resources.functions import random_name
+import os
 
-    def __init__(self, file_name, dir, ext = "txt", content=[]):
+class File():
+
+    def __init__(self, file_name = random_name(), dir = os.getcwd(), ext = "txt", content=[]):
 
         self.file_name = file_name
         self.dir = dir

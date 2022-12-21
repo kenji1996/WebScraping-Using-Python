@@ -64,8 +64,57 @@ Search desired element:
 <hr/>
 <br>
 
-Catch all elements between 2 given elements :
+Catch all elements between 2 given elements with `BrowserHandler.get_in_between()`:
 
 >
 
-    `Nossa`
+    >>> handler.get('www.python.org')
+
+    >>> handler
+
+    browser: <selenium.webdriver.chrome.webdriver.WebDriver (session="03786af2dc6f5aba4015dc696c6c105a")>
+    current url: https://www.python.org/
+
+
+![Screenshot](/src/resources/images/pythonorgsite.png)
+
+>
+
+    If I want all elements that's between 'About' and 'Events'...
+
+
+![Screenshot](/src/resources/images/pythonorgel.png)
+
+>
+
+    >>> about = handler.search_element('About')
+
+    >>> events = handler.search_element('Events')
+
+    >>> handler.get_in_between(about, events)
+
+    [['Downloads', 'Documentation', 'Community', 'Success Stories', 'News']]
+
+We can also use `PARAMETER return_elements` as `TRUE` to get as `html.HtmlElement object` instead
+
+>
+
+    >>> handler.get_in_between(about, events, return_elements=True)
+
+    [[<Element a at 0x1be2606e6d0>, <Element a at 0x1be2606e310>, <Element a at 0x1be2606e720>, <Element a at 0x1be2606e3b0>, <Element a at 0x1be2606e360>]]
+
+<br>
+<hr/>
+<br>
+
+`BrowserHandler.scrape_page(Element, Element):`
+
+>
+
+    >>> about = handler.search_element('About')
+
+    >>> events = handler.search_element('Events')
+
+    >>> handler.scrape_page(about, events)
+
+    [<Element a at 0x1dd3cca0360>, <Element a at 0x1dd3cca04f0>, <Element a at 0x1dd3cca0590>, <Element a at 0x1dd3cca05e0>, <Element a at 0x1dd3cca0630>, <Element a at 0x1dd3cca0680>, <Element a at 0x1dd3cca0310>]

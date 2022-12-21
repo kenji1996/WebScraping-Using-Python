@@ -1,11 +1,11 @@
 import logging
+import re
 from lxml import html
 from selenium import webdriver
 from selenium.webdriver.remote.remote_connection import LOGGER
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import InvalidArgumentException, NoSuchElementException, TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
-import re
 
 from src.resources import const, functions
 from src.model.elem import Element
@@ -21,8 +21,13 @@ class BrowserHandler:
 
     def __str__(self) -> str:
 
-        string = f""" \nbrowser: {self.browser}\n
-                      current url: {self.browser.current_url}\n"""
+        string = self.__dict__
+
+        return string
+
+    def __repr__(self) -> str:
+        
+        string = self.__dict__
 
         return string
 
@@ -53,14 +58,25 @@ class BrowserHandler:
         LOGGER.setLevel(logging.WARNING)
         options = webdriver.ChromeOptions()
 
-        # Makes browser invisible
-        options.add_argument("--headless")
+        # Make chrome invisible (careful when debugging, chrome can still be open even without debugging)
+        """ options.add_argument("--headless") """
+
+        # Arguments that remove "I'm a bot" flag
         options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
+
+        # Remove "ERROR:gpu_init.cc(426) Passthrough is not supported, GL is disabled" error
+        options.add_argument("--disable-gpu")
 
         # Hides console log
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-        browser = webdriver.Chrome(ChromeDriverManager().install())
+        browser = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+
+        # Change the property value of the navigator for webdriver to undefined
+        browser.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
         return browser
 
     def get(self, text: str) -> None:
@@ -103,6 +119,7 @@ class BrowserHandler:
                 elemento.property['class'] = elem.get('class')
                 elemento.property['id'] = elem.get('id')
                 elemento.property['tag'] = elem.tag
+                elemento.property['parent_tag'] = elem.getparent().tag
                 elemento.property['xpath'] = xpath
 
                 elemento.items = dict( (k, v) for k,v in elem.items()  )
@@ -184,22 +201,69 @@ class BrowserHandler:
         el2_tag = el2.property['tag']
 
         # Finding similar xpath
-        cmm_xpath = functions.get_common_text(elemento1=el1.property['xpath'], elemento2=el2.property['xpath'])
+        cmm_xpath, depth = functions.get_common_xpath(el1, el2)
         cmm_div = tree.xpath(cmm_xpath)[0]
 
-        # In case the content have different tags
-        if el1_tag == el2_tag:
-            content_list = cmm_div.xpath(f'.//{el1_tag}')
-        else:
-            content_list = cmm_div.xpath(f'.//{el1_tag} | .//{el2_tag}')
+        all_el = []
 
-        return content_list
+        if max(depth) > 1:
 
-    def get_in_between(self, el1 : Element, el2 : Element) -> list:
+            el1_ptag = el1.property['parent_tag']
+            el2_ptag = el2.property['parent_tag']
+
+            cmm_div_allel = cmm_div.xpath(f'./{el1_ptag} | ./{el2_ptag}')
+
+            for el in cmm_div_allel:
+                elements = el.xpath(f'./{el1_tag} | ./{el2_tag}')
+                for el in elements:
+                    all_el.append(el)
+
+        elif max(depth) == 1:
+
+            cmm_div_allel = cmm_div.xpath(f'./{el1_tag} | ./{el2_tag}')
+
+            for el in cmm_div_allel:
+                all_el.append(el)
+
+        return all_el
+
+    def get_in_between(self, el1 : Element, el2 : Element, return_elements = False) -> list:
 
         """ Given 2 elements in the same div, returns all elements between them. 
             
             Returns a list of all elements found. """
+
+        # Local func to handle text comparison/indexation
+        def iterate_through(*args : list[html.HtmlElement]):
+            
+            for arg in args:
+                proceed = all(map(lambda x: isinstance(x, html.HtmlElement), arg))
+                if not proceed:
+                    return print('Not all elements are html.Elements')
+                    
+            start, end = 0,0
+
+            content_all = []
+
+            for iterable in args:
+
+                for index, el in enumerate(iterable):
+                    if el.text_content() == ele1.text_content():
+                        start = index
+                    elif el.text_content() == ele2.text_content():
+                        end = index
+                
+                # In case you want the elements itself, not the text content only
+                if not return_elements:
+                    content = [iterable[i].text_content() for i in range(start+1, end)]
+                else:
+                    content = [iterable[i] for i in range(start+1, end)]
+
+                content_all.append(content)
+                del(content)
+
+            return content_all
+
 
         tree = self.html.getroottree()
 
@@ -209,23 +273,65 @@ class BrowserHandler:
         ele2 = tree.xpath(el2.property['xpath'])
         ele2 = ele2[0]
 
-        el1_div, _ = functions.get_common_text(ele1, ele2)
+        el1_parent_tag = el1.property['parent_tag']
+        el2_parent_tag = el2.property['parent_tag']
+
+        div, depths = functions.get_common_xpath(el1, el2)
+
+        el1_div = tree.xpath(div)[0]
 
         tag1 = el1.property['tag']
+        tag2 = el2.property['tag']
 
-        el1_div_el = el1_div.xpath(f'./{tag1}')
+        if max(depths) == 1:
+            el1_div_el = el1_div.xpath(f'./{tag1}')
+            return el1_div_el
 
-        start, end = 0,0
+        elif max(depths) > 1:
 
-        for index, el in enumerate(el1_div_el):
-            if el.text_content() == ele1.text_content():
-                start = index
-            elif el.text_content() == ele2.text_content():
-                end = index
+            if el1_parent_tag == el2_parent_tag:
 
-        content = [el1_div_el[i].text_content() for i in range(start+1, end)]
+                el1_div_allel = el1_div.xpath(f'./{el1_parent_tag}')
+                el1_div_el_per_el = []
 
-        return content
+                for el in el1_div_allel:
+
+                    elem = el.xpath(f'./{tag1}')
+                    if len(elem) == 1:
+                        elem = elem[0]
+                        el1_div_el_per_el.append(elem)
+                    elif len(elem) > 1:
+                        for i in elem:
+                            el1_div_el_per_el.append(i)
+
+                return iterate_through(el1_div_el_per_el)
+
+            else:
+
+                el1_div_allel = el1_div.xpath(f'./{el1_parent_tag}')
+                el2_div_allel = el1_div.xpath(f'./{el2_parent_tag}')
+
+                el_div_el_per_el = []
+
+                for el in el1_div_allel:
+                    elem = el.xpath(f'./{tag1}')
+                    if len(elem) == 1:
+                        elem = elem[0]
+                        el_div_el_per_el.append(elem)
+                    elif len(elem) > 1:
+                        for i in elem:
+                            el_div_el_per_el.append(i)
+
+                for el in el2_div_allel:
+                    elem = el.xpath(f'./{tag2}')
+                    if len(elem) == 1:
+                        elem = elem[0]
+                        el_div_el_per_el.append(elem)
+                    elif len(elem) > 1:
+                        for i in elem:
+                            el_div_el_per_el.append(i)
+
+                return iterate_through(el_div_el_per_el)
 
 if __name__ == "__main__":
     
@@ -235,7 +341,6 @@ if __name__ == "__main__":
     about = handler.search_element('About')
     events = handler.search_element('Events')
 
-    a = about.property['xpath']
-    e = events.property['xpath']
-
-    xpath = functions.get_common_text(a,e)
+    content = handler.get_in_between(about, events)
+    
+    all_content = handler.scrape_page(about, events)

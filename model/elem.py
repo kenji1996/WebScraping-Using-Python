@@ -6,6 +6,7 @@ class Element:
             "id": '',
             "class": '',
             "tag" : '',
+            "parent_tag": '',
             "xpath" : '',
             "text": ''
         }
@@ -14,34 +15,28 @@ class Element:
 
     def __str__(self):
 
-        string = "{\n property\n\n"
-
-        for key, item in self.property.items():
-            string += f""" {key:<10} : {item:<40}\n"""
-
-        string += "}\n\n{\nitems:\n\n"
-
-        for key, item in self.items.items():
-            string += f""" {key:<10} : {item:<40}\n"""
-
-        string += "}"
-        
-        return string
+        return self.__dict__
 
     def __repr__(self) -> str:
         
         string = "{\n property\n\n"
 
         for key, item in self.property.items():
+            if item is None:
+                item = "Empty"
+            elif item == "":
+                item = "Empty"
             string += f""" {key:<10} : {item:<40}\n"""
 
         string += "}\n\n{\nitems:\n\n"
 
         for key, item in self.items.items():
+            if item is None:
+                item = "Empty"
+            elif item == "":
+                item = "Empty"
             string += f""" {key:<10} : {item:<40}\n"""
 
         string += "}"
         
         return string
-
-    
